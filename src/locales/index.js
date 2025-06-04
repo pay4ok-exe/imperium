@@ -1,21 +1,4 @@
-import ru from './ru.json';
-import kz from './kz.json';
+import ru from './ru';
+import kz from './kz';
 
-export const translations = {
-  ru,
-  kz
-};
-
-export const getTranslation = (language, key) => {
-  const keys = key.split('.');
-  let value = translations[language];
-  
-  for (const k of keys) {
-    value = value[k];
-    if (!value) break;
-  }
-  
-  return value || key;
-};
-
-export default translations;
+export { ru, kz };

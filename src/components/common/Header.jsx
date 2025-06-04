@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Layout,
   Button,
@@ -9,7 +10,8 @@ import {
   Space,
   Avatar,
   Drawer,
-  Typography
+  Typography,
+  Select
 } from 'antd';
 import {
   SearchOutlined,
@@ -21,86 +23,81 @@ import {
   HomeOutlined,
   AppstoreOutlined,
   InfoCircleOutlined,
-  PhoneOutlined
+  PhoneOutlined,
+  CloseOutlined
 } from '@ant-design/icons';
-import { useTranslation } from '../../hooks/useTranslation';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { useCart } from '../../contexts/CartContext';
+import { useAuth } from '../../contexts/AuthContext';
 
 const { Header } = Layout;
 const { Text } = Typography;
+const { Option } = Select;
 
-const AppHeader = ({ 
-  isAuthenticated = false,
-  userRole = null,
-  cartItemsCount = 0,
-  favoritesCount = 0,
-  onNavigate
-}) => {
-  const { t, language, changeLanguage } = useTranslation();
+const AppHeader = () => {
+  const { t, language, changeLanguage } = useLanguage();
+  const { cartCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
   const [searchValue, setSearchValue] = useState('');
   const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
 
-  // Language menu
-  const languageMenu = (
-    <Menu
-      items={[
-        { 
-          key: 'ru', 
-          label: 'Русский', 
-          icon: '🇷🇺',
-          onClick: () => changeLanguage('ru')
-        },
-        { 
-          key: 'kz', 
-          label: 'Қазақша', 
-          icon: '🇰🇿',
-          onClick: () => changeLanguage('kz')
-        }
-      ]}
-    />
-  );
+  // Handle scroll effects
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
 
-  // User menu
-  const userMenu = (
-    <Menu
-      items={isAuthenticated ? [
-        { 
-          key: 'profile', 
-          label: t('common.profile'), 
-          icon: <UserOutlined />,
-          onClick: () => onNavigate && onNavigate('/profile')
-        },
-        { 
-          key: 'orders', 
-          label: t('common.orders'), 
-          icon: <ShoppingCartOutlined />,
-          onClick: () => onNavigate && onNavigate('/orders')
-        },
-        { 
-          key: 'favorites', 
-          label: t('common.favorites'), 
-          icon: <HeartOutlined />,
-          onClick: () => onNavigate && onNavigate('/favorites')
-        },
-        { type: 'divider' },
-        { 
-          key: 'logout', 
-          label: t('common.logout'), 
-          danger: true 
-        }
-      ] : [
-        { 
-          key: 'login', 
-          label: t('common.login'),
-          onClick: () => onNavigate && onNavigate('/login')
-        },
-        { 
-          key: 'register', 
-          label: t('common.register'),
-          onClick: () => onNavigate && onNavigate('/register')
-        }
-      ]}
-    />
-  );
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    setMobileMenuVisible(false);
+  };
+
+  const handleSearch = (value) => {
+    navigate(`/catalog?search=${encodeURIComponent(value)}`);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // User dropdown menu items
+  const userMenuItems = [
+    {
+      key: 'profile',
+      label: t('common.profile'),
+      onClick: () => navigate('/profile')
+    },
+    {
+      key: 'orders',
+      label: t('common.orders'),
+      onClick: () => navigate('/orders')
+    },
+    {
+      key: 'favorites',
+      label: t('common.favorites'),
+      onClick: () => navigate('/favorites')
+    },
+    {
+      key: 'logout',
+      label: t('common.logout'),
+      danger: true,
+      onClick: handleLogout
+    }
+  ];
 
   // Mobile menu items
   const mobileMenuItems = [
@@ -108,108 +105,99 @@ const AppHeader = ({
       key: 'home',
       icon: <HomeOutlined />,
       label: t('navigation.home'),
-      onClick: () => {
-        onNavigate && onNavigate('/');
-        setMobileMenuVisible(false);
-      }
+      onClick: () => handleNavigate('/')
     },
     {
       key: 'catalog',
       icon: <AppstoreOutlined />,
       label: t('navigation.catalog'),
-      onClick: () => {
-        onNavigate && onNavigate('/catalog');
-        setMobileMenuVisible(false);
-      }
+      onClick: () => handleNavigate('/catalog')
     },
     {
       key: 'about',
       icon: <InfoCircleOutlined />,
       label: t('navigation.about'),
-      onClick: () => {
-        onNavigate && onNavigate('/about');
-        setMobileMenuVisible(false);
-      }
+      onClick: () => handleNavigate('/about')
     },
     {
       key: 'contact',
       icon: <PhoneOutlined />,
       label: t('navigation.contact'),
-      onClick: () => {
-        onNavigate && onNavigate('/contact');
-        setMobileMenuVisible(false);
-      }
+      onClick: () => handleNavigate('/contact')
     }
   ];
 
-  const handleSearch = (value) => {
-    console.log('Search:', value);
-    // Implement search functionality
-  };
-
   return (
     <>
-      <Header className="bg-white shadow-lg sticky top-0 z-50 px-4 md:px-8 border-b border-gray-100">
+      <Header 
+        className={`fixed top-0 left-0 right-0 z-50 px-4 md:px-8 transition-all duration-300 ${
+          scrolled ? 'bg-white shadow-md h-16' : 'bg-transparent h-20'
+        }`}
+      >
         <div className="flex items-center justify-between h-full max-w-7xl mx-auto">
           {/* Logo */}
           <div className="flex items-center space-x-4">
             <Button
               type="text"
-              icon={<MenuOutlined />}
-              className="md:hidden text-gray-600 hover:text-orange-500"
+              icon={<MenuOutlined className="text-neutral-700" />}
+              className="md:hidden"
               onClick={() => setMobileMenuVisible(true)}
             />
-            <div 
-              className="flex items-center space-x-2 cursor-pointer"
-              onClick={() => onNavigate && onNavigate('/')}
-            >
+            <Link to="/" className="flex items-center space-x-2">
               <span className="text-3xl animate-float">🏛️</span>
-              <span className="text-xl font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
+              <span className="text-xl font-display font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
                 Imperium
               </span>
-            </div>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
             <Button 
               type="text" 
-              className="text-gray-700 hover:text-orange-500 font-medium"
-              onClick={() => onNavigate && onNavigate('/')}
+              className={`text-neutral-700 hover:text-primary ${
+                location.pathname === '/' ? 'text-primary' : ''
+              }`}
+              onClick={() => navigate('/')}
             >
               {t('navigation.home')}
             </Button>
             <Button 
               type="text" 
-              className="text-gray-700 hover:text-orange-500 font-medium"
-              onClick={() => onNavigate && onNavigate('/catalog')}
+              className={`text-neutral-700 hover:text-primary ${
+                location.pathname === '/catalog' ? 'text-primary' : ''
+              }`}
+              onClick={() => navigate('/catalog')}
             >
               {t('navigation.catalog')}
             </Button>
             <Button 
               type="text" 
-              className="text-gray-700 hover:text-orange-500 font-medium"
-              onClick={() => onNavigate && onNavigate('/about')}
+              className={`text-neutral-700 hover:text-primary ${
+                location.pathname === '/about' ? 'text-primary' : ''
+              }`}
+              onClick={() => navigate('/about')}
             >
               {t('navigation.about')}
             </Button>
             <Button 
               type="text" 
-              className="text-gray-700 hover:text-orange-500 font-medium"
-              onClick={() => onNavigate && onNavigate('/contact')}
+              className={`text-neutral-700 hover:text-primary ${
+                location.pathname === '/contact' ? 'text-primary' : ''
+              }`}
+              onClick={() => navigate('/contact')}
             >
               {t('navigation.contact')}
             </Button>
           </div>
 
-          {/* Search */}
+          {/* Search (Desktop) */}
           <div className="hidden md:flex flex-1 max-w-md mx-8">
             <Input.Search
               placeholder={t('common.searchPlaceholder')}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onSearch={handleSearch}
-              size="large"
               className="rounded-full"
               enterButton={<SearchOutlined />}
             />
@@ -219,72 +207,96 @@ const AppHeader = ({
           <div className="flex items-center space-x-2 md:space-x-4">
             <Button
               type="text"
-              icon={<SearchOutlined />}
-              className="md:hidden text-gray-600 hover:text-orange-500"
-              size="large"
+              icon={<SearchOutlined className="text-neutral-700" />}
+              className="md:hidden"
+              onClick={() => navigate('/search')}
             />
             
-            <Dropdown overlay={languageMenu} placement="bottomRight">
-              <Button
-                type="text"
-                icon={<GlobalOutlined />}
-                className="hidden md:flex items-center text-gray-600 hover:text-orange-500"
-              >
-                <Text className="ml-1 font-medium">
-                  {language === 'ru' ? 'РУ' : 'ҚЗ'}
-                </Text>
-              </Button>
-            </Dropdown>
+            <Select
+              value={language}
+              onChange={changeLanguage}
+              bordered={false}
+              dropdownMatchSelectWidth={false}
+              className="hidden md:inline-block"
+            >
+              <Option value="ru">
+                <Space>
+                  <span>🇷🇺</span>
+                  <span className="font-medium">РУС</span>
+                </Space>
+              </Option>
+              <Option value="kz">
+                <Space>
+                  <span>🇰🇿</span>
+                  <span className="font-medium">ҚАЗ</span>
+                </Space>
+              </Option>
+            </Select>
 
             <Badge count={favoritesCount} size="small" offset={[-2, 2]}>
               <Button
                 type="text"
-                icon={<HeartOutlined />}
-                size="large"
-                className="text-gray-600 hover:text-red-500 transition-colors"
-                onClick={() => onNavigate && onNavigate('/favorites')}
+                icon={<HeartOutlined className="text-neutral-700 hover:text-red-500" />}
+                onClick={() => navigate('/favorites')}
               />
             </Badge>
 
-            <Badge count={cartItemsCount} size="small" offset={[-2, 2]}>
+            <Badge count={cartCount} size="small" offset={[-2, 2]}>
               <Button
                 type="text"
-                icon={<ShoppingCartOutlined />}
-                size="large"
-                className="text-gray-600 hover:text-orange-500 transition-colors"
-                onClick={() => onNavigate && onNavigate('/cart')}
+                icon={<ShoppingCartOutlined className="text-neutral-700 hover:text-primary" />}
+                onClick={() => navigate('/cart')}
               />
             </Badge>
 
-            <Dropdown overlay={userMenu} placement="bottomRight">
-              <Button
-                type="text"
-                className="flex items-center text-gray-600 hover:text-orange-500"
+            {isAuthenticated() ? (
+              <Dropdown
+                menu={{ items: userMenuItems }}
+                placement="bottomRight"
+                arrow
               >
-                <Avatar 
-                  size="small" 
-                  icon={<UserOutlined />}
-                  className="bg-gradient-to-r from-orange-400 to-amber-500"
-                />
-                {isAuthenticated && (
-                  <Text className="ml-2 hidden md:inline font-medium">
-                    {userRole === 'admin' ? t('common.admin') : t('common.user')}
-                  </Text>
-                )}
+                <Button type="text">
+                  <Avatar 
+                    size="small" 
+                    icon={<UserOutlined />}
+                    className="bg-primary"
+                  />
+                  <span className="ml-2 hidden md:inline text-neutral-700">
+                    {user?.fullname.split(' ')[0]}
+                  </span>
+                </Button>
+              </Dropdown>
+            ) : (
+              <Button 
+                type="primary"
+                onClick={() => navigate('/login')}
+                className="hidden md:inline-block"
+              >
+                {t('common.login')}
               </Button>
-            </Dropdown>
+            )}
           </div>
         </div>
       </Header>
 
+      {/* Empty space to offset fixed header */}
+      <div className={scrolled ? 'h-16' : 'h-20'} />
+
       {/* Mobile Menu Drawer */}
       <Drawer
         title={
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">🏛️</span>
-            <span className="text-lg font-bold bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-              Imperium
-            </span>
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <span className="text-2xl">🏛️</span>
+              <span className="text-lg font-display font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                Imperium
+              </span>
+            </div>
+            <Button
+              type="text"
+              icon={<CloseOutlined />}
+              onClick={() => setMobileMenuVisible(false)}
+            />
           </div>
         }
         placement="left"
@@ -292,6 +304,7 @@ const AppHeader = ({
         open={mobileMenuVisible}
         width={280}
         className="md:hidden"
+        headerStyle={{ borderBottom: 'none' }}
       >
         <div className="space-y-4">
           {/* Mobile Search */}
@@ -299,7 +312,6 @@ const AppHeader = ({
             placeholder={t('common.searchMobile')}
             onSearch={handleSearch}
             className="mb-6"
-            size="large"
           />
 
           {/* Mobile Menu Items */}
@@ -307,35 +319,86 @@ const AppHeader = ({
             mode="vertical"
             items={mobileMenuItems}
             className="border-none"
+            selectedKeys={[location.pathname === '/' ? 'home' : location.pathname.split('/')[1]]}
           />
 
           {/* Language Switcher */}
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-4 border-t border-neutral-100">
             <Text strong className="block mb-3">
               {t('common.language')}
             </Text>
             <div className="flex space-x-2">
               <Button
                 type={language === 'ru' ? 'primary' : 'default'}
-                onClick={() => {
-                  changeLanguage('ru');
-                  setMobileMenuVisible(false);
-                }}
+                onClick={() => changeLanguage('ru')}
                 className="flex-1"
               >
                 🇷🇺 Русский
               </Button>
               <Button
                 type={language === 'kz' ? 'primary' : 'default'}
-                onClick={() => {
-                  changeLanguage('kz');
-                  setMobileMenuVisible(false);
-                }}
+                onClick={() => changeLanguage('kz')}
                 className="flex-1"
               >
                 🇰🇿 Қазақша
               </Button>
             </div>
+          </div>
+
+          {/* User Authentication */}
+          <div className="pt-4 border-t border-neutral-100">
+            {isAuthenticated() ? (
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Avatar icon={<UserOutlined />} className="bg-primary" />
+                  <div>
+                    <Text strong>{user?.fullname}</Text>
+                    <Text type="secondary" className="block text-sm">{user?.email}</Text>
+                  </div>
+                </div>
+                <Button 
+                  block 
+                  onClick={() => handleNavigate('/profile')}
+                >
+                  {t('common.profile')}
+                </Button>
+                <Button 
+                  block
+                  onClick={() => handleNavigate('/orders')}
+                >
+                  {t('common.orders')}
+                </Button>
+                <Button 
+                  block 
+                  onClick={() => handleNavigate('/favorites')}
+                >
+                  {t('common.favorites')}
+                </Button>
+                <Button 
+                  block 
+                  danger 
+                  onClick={handleLogout}
+                >
+                  {t('common.logout')}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Button 
+                  type="primary" 
+                  block 
+                  onClick={() => handleNavigate('/login')}
+                >
+                  {t('common.login')}
+                </Button>
+                <Button 
+                  block 
+                  onClick={() => handleNavigate('/register')}
+                >
+                  {t('common.register')}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </Drawer>

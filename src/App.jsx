@@ -2,7 +2,9 @@ import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import AppRouter from './router/AppRouter';
-// import ErrorBoundary from './components/common/ErrorBoundary';
+import { LanguageProvider } from './contexts/LanguageContext';
+import { CartProvider } from './contexts/CartContext';
+import { AuthProvider } from './contexts/AuthContext';
 import './styles/globals.css';
 import './styles/antd-overrides.css';
 
@@ -35,13 +37,17 @@ const themeConfig = {
 function App() {
   return (
     <ConfigProvider theme={themeConfig}>
-      {/* <ErrorBoundary> */}
-        <BrowserRouter>
-          <div className="App min-h-screen">
-            <AppRouter />
-          </div>
-        </BrowserRouter>
-      {/* </ErrorBoundary> */}
+      <AuthProvider>
+        <LanguageProvider>
+          <CartProvider>
+            <BrowserRouter>
+              <div className="App min-h-screen">
+                <AppRouter />
+              </div>
+            </BrowserRouter>
+          </CartProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </ConfigProvider>
   );
 }

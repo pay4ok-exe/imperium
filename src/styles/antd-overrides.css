@@ -1,42 +1,33 @@
-/* Override Ant Design primary color */
+
+/* Ant Design Overrides */
 .ant-btn-primary {
-    background: linear-gradient(45deg, #8B4513, #D2691E) !important;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3) !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: var(--color-primary-dark) !important;
+  border-color: var(--color-primary-dark) !important;
+}
+
+.ant-input:focus, 
+.ant-input-focused {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(210, 105, 30, 0.2) !important;
+}
+
+.ant-select-focused .ant-select-selector {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(210, 105, 30, 0.2) !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .section-title {
+    @apply text-2xl;
   }
   
-  .ant-btn-primary:hover {
-    background: linear-gradient(45deg, #A0522D, #FF8C00) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 69, 19, 0.4) !important;
+  .section-subtitle {
+    @apply text-base mb-6;
   }
-  
-  /* Card hover effects */
-  .ant-card-hoverable:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
-  }
-  
-  /* Input focus states */
-  .ant-input:focus,
-  .ant-input-focused {
-    border-color: #D2691E !important;
-    box-shadow: 0 0 0 2px rgba(210, 105, 30, 0.2) !important;
-  }
-  
-  /* Rate component custom color */
-  .ant-rate-star-full svg {
-    color: #FFD700 !important;
-  }
-  
-  /* Mobile responsiveness */
-  @media (max-width: 768px) {
-    .ant-card-meta-title {
-      font-size: 16px !important;
-    }
-    
-    .ant-btn-lg {
-      height: 48px !important;
-      font-size: 16px !important;
-    }
-  }
+}
